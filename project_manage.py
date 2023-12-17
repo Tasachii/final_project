@@ -2,7 +2,6 @@
 
 from database import CSV, Database, Table
 import csv
-import datetime
 import uuid
 
 # define a funcion called initializing
@@ -133,7 +132,8 @@ class Lead(Student):
         self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
         self.run()
 
-    def see_project(self):
+    @staticmethod
+    def see_project():
         all_project = DB.search('project')
         print(all_project)
 
@@ -418,7 +418,8 @@ class Admin:
                 return
         print("Project title not found.")
 
-    def delete_project(self):
+    @staticmethod
+    def delete_project():
         project_title = input("Enter the title of the project to delete: ")
         projects = DB.search('project')
 
@@ -658,7 +659,7 @@ def main():
     try:
         user.run()
     except:
-        ("You Do Not Have Permission")
+        "You Do Not Have Permission"
 
 
 main()
