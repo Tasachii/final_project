@@ -12,9 +12,9 @@
    - **Member**
      - [ ] Modify Project
    - **Student**
-      -[ ] See an invitational message from the lead
-      -[ ] Accept of deny the invitation
-      -[ ] See Project
+     - [ ] See an invitational message from the lead
+     - [ ] Accept of deny the invitation
+     - [ ] See Project
 2. **Faculty**
    - **Normal Faculty**
    - [ ] See request to be a supervisor
