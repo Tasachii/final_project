@@ -96,8 +96,8 @@ class Student:
             print("--Choose--")
             print("1. Check inbox.")
             print("2. Create a project.")
-            print("3. Logout.")
             print("4. View invitation.")
+            print("3. Logout.")
             print("5. Accept invite")
             print("6. Deny invite")
 
@@ -133,8 +133,7 @@ class Lead(Student):
         self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
         self.run()
 
-    @staticmethod
-    def see_project():
+    def see_project(self):
         all_project = DB.search('project')
         print(all_project)
 
@@ -211,6 +210,9 @@ class Lead(Student):
             'Response_date': None
         })
         print("Request sent to advisor successfully.")
+
+    def status(self):
+        pass
 
     def summit(self):
         project_table = DB.search('project')
@@ -416,8 +418,7 @@ class Admin:
                 return
         print("Project title not found.")
 
-    @staticmethod
-    def delete_project():
+    def delete_project(self):
         project_title = input("Enter the title of the project to delete: ")
         projects = DB.search('project')
 
@@ -657,7 +658,7 @@ def main():
     try:
         user.run()
     except:
-        "You Do Not Have Permission"
+        ("You Do Not Have Permission")
 
 
 main()
