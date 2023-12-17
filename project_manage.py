@@ -3,6 +3,7 @@
 from database import CSV, Database, Table
 import csv
 import datetime
+import uuid
 
 # define a funcion called initializing
 DB = Database()
@@ -22,12 +23,12 @@ class Student:
         Title = input('Project Title')
         Lead_id = self.id
         project = {
-                   'Title': Title,
-                   'Lead': Lead_id,
-                   'Member1': 'none',
-                   'Member2': 'none',
-                   'Advisor': 'none',
-                   'Status': 'In-Progress'
+            'Title': Title,
+            'Lead': Lead_id,
+            'Member1': 'none',
+            'Member2': 'none',
+            'Advisor': 'none',
+            'Status': 'In-Progress'
         }
         data_login.insert(project)
         for i in login_table.table:
@@ -42,24 +43,41 @@ class Student:
 
     def see_invite(self):
         pending = DB.search('member')
-        my_invite = pending.filter(lambda invite: invite['Member_Request'] == self.id and invite['Response'] == 'pending')
+        my_invite = pending.filter(
+            lambda invite: invite['Member_Request'] == self.id and invite['Response'] == 'pending')
         print(my_invite.table)
 
     def accept_invite(self):
-        project = DB.search('project')
+        token = input('Enter the invitation token: ')
         pending = DB.search('member')
-        self.see_invite()
-        lead_id = input('Input lead id to select project')
-        for request in pending.table:
-            if request['Member_Request'] == self.id and request['Lead'] == lead_id and request['Response'] == 'pending':
-                request['Response'] = 'accept'
+        project_table = DB.search('project')
 
-        for pro in project.table:
-            if pro['Lead'] == lead_id:
-                if pro['Member1'] == 'none':
-                    pro['Member1'] = self.id
-                else:
-                    pro['Member2'] = self.id
+        # Find the invitation by token
+        invitation = next((invite for invite in pending.table if
+                           invite['invitation_token'] == token and invite['Member_Request'] == self.id and invite[
+                               'Response'] == 'pending'), None)
+
+        if invitation:
+            # Find the corresponding project
+            for project in project_table.table:
+                if project['Title'] == invitation['project_title'] and project['Lead'] == invitation['Lead']:
+                    # Update member slot in the project
+                    if project['Member1'] == 'none':
+                        project['Member1'] = self.id
+                    elif project['Member2'] == 'none':
+                        project['Member2'] = self.id
+                    else:
+                        print("Project is already full.")
+                        return
+
+                    # Update the status of the invitation
+                    invitation['Response'] = 'accepted'
+                    print("Invitation accepted successfully.")
+                    return
+
+            print("Project not found.")
+        else:
+            print("Invalid or expired invitation token.")
 
     def deny_invite(self):
         project = DB.search('project')
@@ -71,8 +89,6 @@ class Student:
             if request['Member_Request'] == self.id and request['Lead'] == lead_id and request['Response'] == 'pending':
                 request['Response'] = 'denied'
 
-
-
     def run(self):
         print(self)
         print()
@@ -80,8 +96,8 @@ class Student:
             print("--Choose--")
             print("1. Check inbox.")
             print("2. Create a project.")
-            print("4. View invitation.")
             print("3. Logout.")
+            print("4. View invitation.")
             print("5. Accept invite")
             print("6. Deny invite")
 
@@ -117,44 +133,94 @@ class Lead(Student):
         self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
         self.run()
 
-    def see_project(self):
+    @staticmethod
+    def see_project():
         all_project = DB.search('project')
         print(all_project)
 
     def sent_invite(self):
-        user_id = input('Search: ')
-        login_table = DB.search('login')
+        user_id = input('Enter the ID of the member to invite: ')
+        invitation_token = str(uuid.uuid4())  # Generate a unique token
         pending_invite_table = DB.search('member')
 
-        for person in login_table.table:
-            if person['ID'] == user_id:
-                pending_invite_table.insert(
-                    {
-                        'Lead': self.id,
-                        'Member_Request': user_id,
-                        'Response': 'pending',
-                        'project_title': self.project['Title']
-                    }
-                )
-
+        pending_invite_table.insert({
+            'Lead': self.id,
+            'Member_Request': user_id,
+            'Response': 'pending',
+            'project_title': self.project['Title'],
+            'invitation_token': invitation_token  # Add token to the invitation
+        })
+        print(f"Invitation sent with token: {invitation_token}")
 
     def add_member(self):
-        pass
+        member_id = input('Enter the ID of the member to add: ')
+        project_table = DB.search('project')
+
+        # Check if the member can be added
+        if self.project['Member1'] == 'none':
+            self.project['Member1'] = member_id
+        elif self.project['Member2'] == 'none':
+            self.project['Member2'] = member_id
+        else:
+            print("No available slot to add a new member.")
+            return
+
+        # Update the project record
+        project_table.update_row('Lead', self.id, 'Member1', self.project['Member1'])
+        project_table.update_row('Lead', self.id, 'Member2', self.project['Member2'])
+        print("Member added successfully.")
 
     def remove_member(self):
-        pass
+        member_id = input('Enter the ID of the member to remove: ')
+        project_table = DB.search('project')
+
+        # Check if the member can be removed
+        if self.project['Member1'] == member_id:
+            self.project['Member1'] = 'none'
+        elif self.project['Member2'] == member_id:
+            self.project['Member2'] = 'none'
+        else:
+            print("Member not found in the project.")
+            return
+
+        # Update the project record
+        project_table.update_row('Lead', self.id, 'Member1', self.project['Member1'])
+        project_table.update_row('Lead', self.id, 'Member2', self.project['Member2'])
+        print("Member removed successfully.")
 
     def modify_project(self):
-        pass
+        project_table = DB.search('project')
+        new_title = input("Enter new project title: ")
+        new_status = input("Enter new project status: ")
 
-    def send_request_advisor(self):
-        pass
+        # Update the project record
+        self.project['Title'] = new_title
+        self.project['Status'] = new_status
+        project_table.update_row('Lead', self.id, 'Title', new_title)
+        project_table.update_row('Lead', self.id, 'Status', new_status)
+        print("Project modified successfully.")
 
-    def status(self):
-        pass
+    def send_request_to_advisor(self):
+        advisor_id = input('Enter the ID of the advisor to send request to: ')
+        advisor_request_table = DB.search('advisor')
+
+        advisor_request_table.insert({
+            'ProjectID': self.id,
+            'Advisor_Request': advisor_id,
+            'Response': 'pending',
+            'Response_date': None
+        })
+        print("Request sent to advisor successfully.")
 
     def summit(self):
-        pass
+        project_table = DB.search('project')
+        # Ensure the project exists and is led by the current user
+        if self.project and self.project['Lead'] == self.id:
+            self.project['Status'] = 'Submitted'
+            project_table.update_row('Lead', self.id, 'Status', 'Submitted')
+            print("Project submitted successfully.")
+        else:
+            print("No active project found or you are not the lead.")
 
     def run(self):
         print(self)
@@ -181,17 +247,59 @@ class Member:
         self.id = id
         self.user = username
         self.role = role
-        self.request_box = []
-        self.run()
 
     def see_project(self):
-        pass
+        project_table = DB.search('project')
+        my_projects = project_table.filter(
+            lambda p: p['Lead'] == self.id or p['Member1'] == self.id or p['Member2'] == self.id)
+
+        if not my_projects.table:
+            print("You are not part of any projects.")
+            return
+
+        for project in my_projects.table:
+            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
 
     def modify_project(self):
-        pass
+        project_table = DB.search('project')
+        my_projects = project_table.filter(
+            lambda p: p['Lead'] == self.id or p['Member1'] == self.id or p['Member2'] == self.id)
+
+        if not my_projects.table:
+            print("No projects found to modify.")
+            return
+
+        project_title = input("Enter the title of the project to modify: ")
+        new_title = input("Enter new title (leave blank for no change): ")
+
+        for project in my_projects.table:
+            if project['Title'] == project_title:
+                if new_title:
+                    project['Title'] = new_title
+                    project_table.update_row('Title', project_title, 'Title', new_title)
+                    print("Project title updated successfully.")
+                else:
+                    print("No changes made to the project.")
+                return
+
+        print("Project not found or you do not have permission to modify it.")
 
     def run(self):
-        pass
+        while True:
+            print("-- Member Menu --")
+            print("1. See My Projects")
+            print("2. Modify a Project")
+            print("3. Logout")
+            choice = input("Enter your choice: ")
+
+            if choice == '1':
+                self.see_project()
+            elif choice == '2':
+                self.modify_project()
+            elif choice == '3':
+                break
+            else:
+                print("Invalid choice")
 
 
 class Advisor:
@@ -199,20 +307,75 @@ class Advisor:
         self.id = id
         self.user = username
         self.role = role
-        self.request_box = []
-        self.run()
 
     def see_request_supervisor(self):
-        pass
+        advisor_requests = DB.search('advisor').table
+        for request in advisor_requests:
+            if request['Advisor_Request'] == self.id:
+                print(f"Project ID: {request['ProjectID']}, Response: {request['Response']}")
 
     def manage_request(self):
-        pass
+        self.see_request_supervisor()
+        project_id = input("Enter Project ID to manage: ")
+        response = input("Accept or Deny the request? (accept/deny): ")
+        advisor_requests = DB.search('advisor')
 
-    def see_project(self):
-        pass
+        for request in advisor_requests.table:
+            if request['ProjectID'] == project_id and request['Advisor_Request'] == self.id:
+                request['Response'] = response
+                print(f"Request for Project ID {project_id} has been {response}.")
+                return
+        print("Project ID not found or request not for this advisor.")
+
+    @staticmethod
+    def see_project():
+        projects = DB.search('project').table
+        for project in projects:
+            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
+
+    @staticmethod
+    def approve_project():
+        project_title = input("Enter the project title to approve: ")
+        projects = DB.search('project')
+        for project in projects.table:
+            if project['Title'] == project_title:
+                project['Status'] = 'Approved'
+                print(f"Project '{project_title}' has been approved.")
+                return
+        print("Project title not found.")
+
+    @staticmethod
+    def comment_on_project():
+        project_title = input("Enter the project title to comment on: ")
+        comment = input("Enter your comment: ")
+        # Here you should implement the logic to store the comment in your system.
+        print(f"Comment added to project '{project_title}': {comment}")
 
     def run(self):
-        pass
+        while True:
+            print("-- Advisor Menu --")
+            print("1. See supervisor requests")
+            print("2. Manage requests")
+            print("3. See all projects")
+            print("4. Comment on a project")
+            print("5. Approve a project")
+            print("6. Logout")
+            choice = input("Enter your choice: ")
+
+            if choice == '1':
+                self.see_request_supervisor()
+            elif choice == '2':
+                self.manage_request()
+            elif choice == '3':
+                self.see_project()
+            elif choice == '4':
+                self.comment_on_project()
+            elif choice == '5':
+                self.approve_project()
+            elif choice == '6':
+                break
+            else:
+                print("Invalid choice")
 
 
 class Admin:
@@ -220,11 +383,64 @@ class Admin:
         self.id = id
         self.user = username
         self.role = role
-        self.request_box = []
-        self.run()
+
+    def manage_database(self):
+        print("Database Management")
+        print("1. Edit a Project")
+        print("2. Delete a Project")
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            self.edit_project()
+        elif choice == '2':
+            self.delete_project()
+        else:
+            print("Invalid choice")
+
+    @staticmethod
+    def edit_project():
+        project_title = input("Enter the title of the project to edit: ")
+        projects = DB.search('project')
+
+        for project in projects.table:
+            if project['Title'] == project_title:
+                new_title = input("Enter new title (leave blank to keep current): ")
+                new_status = input("Enter new status (leave blank to keep current): ")
+
+                if new_title:
+                    project['Title'] = new_title
+                if new_status:
+                    project['Status'] = new_status
+
+                print(f"Project '{project_title}' has been updated.")
+                return
+        print("Project title not found.")
+
+    @staticmethod
+    def delete_project():
+        project_title = input("Enter the title of the project to delete: ")
+        projects = DB.search('project')
+
+        for i, project in enumerate(projects.table):
+            if project['Title'] == project_title:
+                del projects.table[i]
+                print(f"Project '{project_title}' has been deleted.")
+                return
+        print("Project title not found.")
 
     def run(self):
-        pass
+        while True:
+            print("-- Admin Menu --")
+            print("1. Manage Database")
+            print("2. Logout")
+            choice = input("Enter your choice: ")
+
+            if choice == '1':
+                self.manage_database()
+            elif choice == '2':
+                break
+            else:
+                print("Invalid choice")
 
 
 class Faculty:
@@ -232,11 +448,62 @@ class Faculty:
         self.id = id
         self.user = username
         self.role = role
-        self.request_box = []
-        self.run()
+
+    @staticmethod
+    def view_supervisor_requests():
+        advisor_requests = DB.search('advisor').table
+        for request in advisor_requests:
+            print(
+                f"Project ID: {request['ProjectID']}, Advisor Request: {request['Advisor_Request']}, Response: {request['Response']}")
+
+    def manage_request(self):
+        self.view_supervisor_requests()
+        project_id = input("Enter Project ID to manage: ")
+        response = input("Accept or Deny the request? (accept/deny): ")
+        advisor_requests = DB.search('advisor')
+
+        for request in advisor_requests.table:
+            if request['ProjectID'] == project_id:
+                request['Response'] = response
+                print(f"Request for Project ID {project_id} has been {response}.")
+                return
+        print("Project ID not found.")
+
+    @staticmethod
+    def view_all_projects():
+        projects = DB.search('project').table
+        for project in projects:
+            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
+
+    @staticmethod
+    def comment_on_project():
+        project_title = input("Enter the project title to comment on: ")
+        comment = input("Enter your comment: ")
+        print(f"Comment added to project '{project_title}': {comment}")
 
     def run(self):
-        pass
+        while True:
+            print("-- Faculty Menu --")
+            print("1. View Supervisor Requests")
+            print("2. Manage Requests")
+            print("3. View All Projects")
+            print("4. Comment on a Project")
+            print("5. Logout")
+            choice = input("Enter your choice: ")
+
+            if choice == '1':
+                self.view_supervisor_requests()
+            elif choice == '2':
+                self.manage_request()
+            elif choice == '3':
+                self.view_all_projects()
+            elif choice == '4':
+                self.comment_on_project()
+            elif choice == '5':
+                break
+            else:
+                print("Invalid choice")
+
 
 def initializing():
     """
@@ -306,6 +573,7 @@ def write_csv(filename, head, dict):
     writer.writerows(dict)
     file.close()
 
+
 def exit():
     # login = open('database/login.csv', 'w')
     # login_writer = csv.writer(login)
@@ -325,7 +593,6 @@ def exit():
 
     write_csv('persons.csv', ['ID', 'first', 'last', 'type'], DB.search('persons').table)
 
-
     # project = open('database/project.csv', 'w')
     # project_writer = csv.writer(project)
     # project_writer.writerow(['Title','Lead','Member1','Member2','Advisor','Status'])
@@ -333,8 +600,7 @@ def exit():
     #     person_writer.writerow(each.values())
     # person.close()
 
-    write_csv('project.csv', ['Title','Lead','Member1','Member2','Advisor','Status'], DB.search('project').table)
-
+    write_csv('project.csv', ['Title', 'Lead', 'Member1', 'Member2', 'Advisor', 'Status'], DB.search('project').table)
 
     # advisor_pending = open('database/Advisor_pending_request.csv', 'w')
     # advisor_pending_writer = csv.writer(advisor_pending)
@@ -343,8 +609,8 @@ def exit():
     #     person_writer.writerow(each.values())
     # person.close()
 
-    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request', 'Response', 'Response_date'], DB.search('advisor').table)
-
+    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request', 'Response', 'Response_date'],
+              DB.search('advisor').table)
 
     # member_pending = open('database/member_pending_request.csv', 'w')
     # member_pending_writer = csv.writer(member_pending)
@@ -353,7 +619,8 @@ def exit():
     #     person_writer.writerow(each.values())
     # person.close()
 
-    write_csv('member_pending_request.csv', ['Lead','project_title','Member_Request','Response'], DB.search('member').table)
+    write_csv('member_pending_request.csv', ['Lead', 'project_title', 'Member_Request', 'Response'],
+              DB.search('member').table)
 
     print('\n Program Exit')
 
@@ -390,7 +657,7 @@ def main():
     try:
         user.run()
     except:
-        ("You Do Not Have Permission")
+        "You Do Not Have Permission"
 
 
 main()
