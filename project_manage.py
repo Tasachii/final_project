@@ -79,7 +79,6 @@ class Student:
             print("Invalid or expired invitation token.")
 
     def deny_invite(self):
-        project = DB.search('project')
         pending = DB.search('member')
         self.see_invite()
         lead_id = input('Input lead id to select project')
@@ -125,12 +124,12 @@ class Student:
 
 class Lead(Student):
     def __init__(self, id, username, role):
+        super().__init__(id, username, role)
         self.id = id
         self.user = username
         self.role = role
         self.request_box = []
         self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
-        self.run()
 
     @staticmethod
     def see_project():
@@ -211,9 +210,6 @@ class Lead(Student):
         })
         print("Request sent to advisor successfully.")
 
-    def status(self):
-        pass
-
     def summit(self):
         project_table = DB.search('project')
         # Ensure the project exists and is led by the current user
@@ -230,7 +226,7 @@ class Lead(Student):
         while True:
             print("--Choose--")
             print("1. Invite member")
-            print("2. Create a project")
+            print('2. Create a project')
             print("3. Logout")
             choice = int(input("Enter your choice: "))
             if choice == 1:
@@ -457,7 +453,8 @@ class Faculty:
         advisor_requests = DB.search('advisor').table
         for request in advisor_requests:
             print(
-                f"Project ID: {request['ProjectID']}, Advisor Request: {request['Advisor_Request']}, Response: {request['Response']}")
+                f"Project ID: {request['ProjectID']}, Advisor Request: {request['Advisor_Request']}, "
+                f"Response: {request['Response']}")
 
     def manage_request(self):
         self.view_supervisor_requests()
@@ -551,11 +548,6 @@ def login_base():
         else:
             print("Invalid username or password pls try again")
 
-
-def find_project(name):
-    data_login = DB.search('login')
-
-
 # def data_person(ID):
 #     person = DB.search('person')
 #     person_filter = Table.filter(lambda x: x['ID'] == ID)
@@ -622,7 +614,7 @@ def exit():
     #     person_writer.writerow(each.values())
     # person.close()
 
-    write_csv('member_pending_request.csv', ['Lead', 'project_title', 'Member_Request', 'Response'],
+    write_csv('member_pending_request.csv', ['Lead', 'project_title', 'Member_Request', 'Response', 'invitation_token'],
               DB.search('member').table)
 
     print('\n Program Exit')
@@ -630,7 +622,9 @@ def exit():
 
 # here are things to do in this function:
 # write out all the tables that have been modified to the corresponding csv files
-# By now, you know how to read in a csv file and transform it into a list of dictionaries. For this project, you also need to know how to do the reverse, i.e., writing out to a csv file given a list of dictionaries. See the link below for a tutorial on how to do this:
+# By now, you know how to read in a csv file and transform it into a list of dictionaries.
+# For this project, you also need to know how to do the reverse, i.e., writing out to a csv file
+# given a list of dictionaries. See the link below for a tutorial on how to do this:
 
 # https://www.pythonforbeginners.com/basics/list-of-dictionaries-to-csv-in-python
 
@@ -638,7 +632,8 @@ def exit():
 # make calls to the initializing and login functions defined above
 initializing()
 val = login_base()
-# based on the return value for login, activate the code that performs activities according to the role defined for that person_id
+# based on the return value for login, activate the code that performs activities according to the role
+# defined for that person_id
 print(val[1])
 if val[1] == 'admin':
     user = Admin(val[0], val[2], val[1])
@@ -664,5 +659,5 @@ def main():
 
 
 main()
-# once everything is done, make a call to the exit function
+# once everyhthing is done, make a call to the exit function
 exit()
