@@ -95,8 +95,8 @@ class Student:
             print("--Choose--")
             print("1. Check inbox.")
             print("2. Create a project.")
-            print("4. View invitation.")
             print("3. Logout.")
+            print("4. View invitation.")
             print("5. Accept invite")
             print("6. Deny invite")
 
