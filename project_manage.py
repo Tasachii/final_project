@@ -15,25 +15,24 @@ class Student:
         self.user = username
         self.role = role
         self.request_box = []
-        self.run()
 
     def create_project(self):
         data_login = DB.search('project')
-        print(data_login.project())
-        name = input('Project Name')
+        login_table = DB.search('login')
         Title = input('Project Title')
-        Lead = input('Project Lead')
-        Member1 = input('Project Member1')
-        Member2 = input('Project Member2')
-        Advisor = input('Project Advisor')
-        project = {'ProjectID': name,
+        Lead_id = self.id
+        project = {
                    'Title': Title,
-                   'Lead': Lead,
-                   'Member1': Member1,
-                   'Member2': Member2,
-                   'Advisor': Advisor,
-                   'Status': 'In-Progress'}
-        # data_login.append(project)
+                   'Lead': Lead_id,
+                   'Member1': 'none',
+                   'Member2': 'none',
+                   'Advisor': 'none',
+                   'Status': 'In-Progress'
+        }
+        data_login.insert(project)
+        for i in login_table.table:
+            if i['ID'] == self.id:
+                i['role'] = 'lead'
 
     def check_inbox(self):
         data_login = DB.search('member')
@@ -42,13 +41,37 @@ class Student:
                 return each
 
     def see_invite(self):
-        pass
+        pending = DB.search('member')
+        my_invite = pending.filter(lambda invite: invite['Member_Request'] == self.id and invite['Response'] == 'pending')
+        print(my_invite.table)
 
     def accept_invite(self):
-        pass
+        project = DB.search('project')
+        pending = DB.search('member')
+        self.see_invite()
+        lead_id = input('Input lead id to select project')
+        for request in pending.table:
+            if request['Member_Request'] == self.id and request['Lead'] == lead_id and request['Response'] == 'pending':
+                request['Response'] = 'accept'
+
+        for pro in project.table:
+            if pro['Lead'] == lead_id:
+                if pro['Member1'] == 'none':
+                    pro['Member1'] = self.id
+                else:
+                    pro['Member2'] = self.id
 
     def deny_invite(self):
-        pass
+        project = DB.search('project')
+        pending = DB.search('member')
+        self.see_invite()
+        lead_id = input('Input lead id to select project')
+
+        for request in pending.table:
+            if request['Member_Request'] == self.id and request['Lead'] == lead_id and request['Response'] == 'pending':
+                request['Response'] = 'denied'
+
+
 
     def run(self):
         print(self)
@@ -57,7 +80,11 @@ class Student:
             print("--Choose--")
             print("1. Check inbox.")
             print("2. Create a project.")
+            print("4. View invitation.")
             print("3. Logout.")
+            print("5. Accept invite")
+            print("6. Deny invite")
+
             choice = int(input("Enter your choice: "))
             if choice == 1:
                 print(self.check_inbox())
@@ -66,6 +93,12 @@ class Student:
                 self.create_project()
             elif choice == 3:
                 break
+            elif choice == 4:
+                self.see_invite()
+            elif choice == 5:
+                self.accept_invite()
+            elif choice == 6:
+                self.deny_invite()
             else:
                 print("you do not have permission")
             print()
@@ -81,19 +114,29 @@ class Lead(Student):
         self.user = username
         self.role = role
         self.request_box = []
+        self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
         self.run()
-
-    def create_project(self):
-        pass
 
     def see_project(self):
         all_project = DB.search('project')
         print(all_project)
 
     def sent_invite(self):
-        name = input('Search: ')
-        if name == DB.search('person'):
-            name.append()
+        user_id = input('Search: ')
+        login_table = DB.search('login')
+        pending_invite_table = DB.search('member')
+
+        for person in login_table.table:
+            if person['ID'] == user_id:
+                pending_invite_table.insert(
+                    {
+                        'Lead': self.id,
+                        'Member_Request': user_id,
+                        'Response': 'pending',
+                        'project_title': self.project['Title']
+                    }
+                )
+
 
     def add_member(self):
         pass
@@ -114,7 +157,23 @@ class Lead(Student):
         pass
 
     def run(self):
-        pass
+        print(self)
+        print()
+        while True:
+            print("--Choose--")
+            print("1. Invite member")
+            print("3. Logout.")
+            choice = int(input("Enter your choice: "))
+            if choice == 1:
+                self.sent_invite()
+            elif choice == 2:
+                print()
+                self.create_project()
+            elif choice == 3:
+                break
+            else:
+                print("you do not have permission")
+            print()
 
 
 class Member:
@@ -239,41 +298,62 @@ def find_project(name):
 # returns [ID, role] if valid, otherwise returning None
 
 # define a function called exit
+
+def write_csv(filename, head, dict):
+    file = open("database/" + filename, 'w')
+    writer = csv.DictWriter(file, fieldnames=head)
+    writer.writeheader()
+    writer.writerows(dict)
+    file.close()
+
 def exit():
-    login = open('database/login.csv', 'w')
-    login_writer = csv.writer(login)
-    login_writer.writerow(['ID', 'username', 'password', 'role'])
-    for each in DB.search('login'):
-        login_writer.writerow(each.values())
-    login.close()
+    # login = open('database/login.csv', 'w')
+    # login_writer = csv.writer(login)
+    # login_writer.writerow(['ID', 'username', 'password', 'role'])
+    # for each in DB.search('login').table:
+    #     login_writer.writerow(each.values())
+    # login.close()
 
-    person = open('database/persons.csv', 'w')
-    person_writer = csv.writer(person)
-    person_writer.writerow(['ID', 'first', 'last', 'type'])
-    for each in DB.search('person'):
-        person_writer.writerow(each.values())
-    person.close()
+    write_csv('login.csv', ['ID', 'username', 'password', 'role'], DB.search('login').table)
 
-    project = open('database/project.csv', 'w')
-    project_writer = csv.writer(project)
-    project_writer.writerow(['ProjectID', 'Title', 'Lead', 'Member1', 'Member2', 'Advisor', 'Status'])
-    for each in DB.search('project'):
-        person_writer.writerow(each.values())
-    person.close()
+    # person = open('database/persons.csv', 'w')
+    # person_writer = csv.writer(person)
+    # person_writer.writerow(['ID', 'first', 'last', 'type'])
+    # for each in DB.search('person').table:
+    #     person_writer.writerow(each.values())
+    # person.close()
 
-    advisor_pending = open('database/Advisor_pending_request.csv', 'w')
-    advisor_pending_writer = csv.writer(advisor_pending)
-    advisor_pending_writer.writerow(['ProjectID', 'Advisor_Request', 'Response', 'Response_date'])
-    for each in DB.search('advisor'):
-        person_writer.writerow(each.values())
-    person.close()
+    write_csv('persons.csv', ['ID', 'first', 'last', 'type'], DB.search('persons').table)
 
-    member_pending = open('database/member_pending_request.csv', 'w')
-    member_pending_writer = csv.writer(member_pending)
-    member_pending_writer.writerow(['ProjectID', 'Member_Request', 'Response', 'Response_date'])
-    for each in DB.search('member'):
-        person_writer.writerow(each.values())
-    person.close()
+
+    # project = open('database/project.csv', 'w')
+    # project_writer = csv.writer(project)
+    # project_writer.writerow(['Title','Lead','Member1','Member2','Advisor','Status'])
+    # for each in DB.search('project').table:
+    #     person_writer.writerow(each.values())
+    # person.close()
+
+    write_csv('project.csv', ['Title','Lead','Member1','Member2','Advisor','Status'], DB.search('project').table)
+
+
+    # advisor_pending = open('database/Advisor_pending_request.csv', 'w')
+    # advisor_pending_writer = csv.writer(advisor_pending)
+    # advisor_pending_writer.writerow(['ProjectID', 'Advisor_Request', 'Response', 'Response_date'])
+    # for each in DB.search('advisor').table:
+    #     person_writer.writerow(each.values())
+    # person.close()
+
+    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request', 'Response', 'Response_date'], DB.search('advisor').table)
+
+
+    # member_pending = open('database/member_pending_request.csv', 'w')
+    # member_pending_writer = csv.writer(member_pending)
+    # member_pending_writer.writerow(['ProjectID', 'Member_Request', 'Response', 'Response_date'])
+    # for each in DB.search('member').table:
+    #     person_writer.writerow(each.values())
+    # person.close()
+
+    write_csv('member_pending_request.csv', ['Lead','project_title','Member_Request','Response'], DB.search('member').table)
 
     print('\n Program Exit')
 
@@ -315,4 +395,4 @@ def main():
 
 main()
 # once everyhthing is done, make a call to the exit function
-# exit()
+exit()
