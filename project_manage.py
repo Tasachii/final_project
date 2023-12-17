@@ -659,5 +659,5 @@ def main():
 
 
 main()
-# once everyhthing is done, make a call to the exit function
+# once everything is done, make a call to the exit function
 exit()
