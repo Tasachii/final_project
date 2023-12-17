@@ -93,10 +93,10 @@ class Student:
         print()
         while True:
             print("--Choose--")
-            print("1. Check inbox.")
-            print("2. Create a project.")
-            print("3. Logout.")
-            print("4. View invitation.")
+            print("1. Check inbox")
+            print("2. Create a project")
+            print("3. Logout")
+            print("4. View invitation")
             print("5. Accept invite")
             print("6. Deny invite")
 
@@ -230,7 +230,8 @@ class Lead(Student):
         while True:
             print("--Choose--")
             print("1. Invite member")
-            print("3. Logout.")
+            print("2. Create a project")
+            print("3. Logout")
             choice = int(input("Enter your choice: "))
             if choice == 1:
                 self.sent_invite()
@@ -663,5 +664,5 @@ def main():
 
 
 main()
-# once everyhthing is done, make a call to the exit function
+# once everything is done, make a call to the exit function
 exit()
