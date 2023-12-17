@@ -18,7 +18,28 @@ class Student:
         self.run()
 
     def create_project(self):
-        pass
+        data_login = DB.search('project')
+        print(data_login.project())
+        name = input('Project Name')
+        Title = input('Project Title')
+        Lead = input('Project Lead')
+        Member1 = input('Project Member1')
+        Member2 = input('Project Member2')
+        Advisor = input('Project Advisor')
+        project = {'ProjectID': name,
+                   'Title': Title,
+                   'Lead': Lead,
+                   'Member1': Member1,
+                   'Member2': Member2,
+                   'Advisor': Advisor,
+                   'Status': 'In-Progress'}
+        # data_login.append(project)
+
+    def check_inbox(self):
+        data_login = DB.search('member')
+        for each in data_login.table:
+            if self.id == each['Member_Id']:
+                return each
 
     def see_invite(self):
         pass
@@ -39,24 +60,28 @@ class Student:
             print("3. Logout.")
             choice = int(input("Enter your choice: "))
             if choice == 1:
-                print()
-                self.check_inbox()
+                print(self.check_inbox())
             elif choice == 2:
                 print()
                 self.create_project()
             elif choice == 3:
                 break
+            else:
+                print("you do not have permission")
             print()
 
     def __str__(self):
-        return (f"Welcome {self.first} {self.last} to Senior_Project Report."
-                f"{self.type} is your role")
-
+        return (f"Welcome {self.user} to Senior_Project Report."
+                f"{self.role} is your role")
 
 
 class Lead(Student):
-    def __init__(self):
-        pass
+    def __init__(self, id, username, role):
+        self.id = id
+        self.user = username
+        self.role = role
+        self.request_box = []
+        self.run()
 
     def create_project(self):
         pass
@@ -88,16 +113,36 @@ class Lead(Student):
     def summit(self):
         pass
 
+    def run(self):
+        pass
+
 
 class Member:
+    def __init__(self, id, username, role):
+        self.id = id
+        self.user = username
+        self.role = role
+        self.request_box = []
+        self.run()
+
     def see_project(self):
         pass
 
     def modify_project(self):
         pass
 
+    def run(self):
+        pass
+
 
 class Advisor:
+    def __init__(self, id, username, role):
+        self.id = id
+        self.user = username
+        self.role = role
+        self.request_box = []
+        self.run()
+
     def see_request_supervisor(self):
         pass
 
@@ -107,14 +152,32 @@ class Advisor:
     def see_project(self):
         pass
 
+    def run(self):
+        pass
+
 
 class Admin:
-    pass
+    def __init__(self, id, username, role):
+        self.id = id
+        self.user = username
+        self.role = role
+        self.request_box = []
+        self.run()
+
+    def run(self):
+        pass
 
 
 class Faculty:
-    pass
+    def __init__(self, id, username, role):
+        self.id = id
+        self.user = username
+        self.role = role
+        self.request_box = []
+        self.run()
 
+    def run(self):
+        pass
 
 def initializing():
     """
@@ -125,23 +188,24 @@ def initializing():
     see the guide how many tables are needed
     add all these tables to the database
     """
-    csv_login = csv1.read_csv('login.csv')
+
+    csv_login = csv1.read_csv('database/login.csv')
     login_table = Table('login', csv_login)
     DB.insert(login_table)
 
-    csv_person = csv1.read_csv('persons.csv')
+    csv_person = csv1.read_csv('database/persons.csv')
     person_table = Table('persons', csv_person)
     DB.insert(person_table)
 
-    csv_project = csv1.read_csv('project.csv')
+    csv_project = csv1.read_csv('database/project.csv')
     project_table = Table('project', csv_project)
     DB.insert(project_table)
 
-    csv_advisor = csv1.read_csv('Advisor_pending_request.csv')
+    csv_advisor = csv1.read_csv('database/Advisor_pending_request.csv')
     advisor_table = Table('advisor', csv_advisor)
     DB.insert(advisor_table)
 
-    csv_member = csv1.read_csv('Member_pending_request.csv')
+    csv_member = csv1.read_csv('database/Member_pending_request.csv')
     member_table = Table('member', csv_member)
     DB.insert(member_table)
 
@@ -154,16 +218,19 @@ def login_base():
         data_login = DB.search('login')
         for each in data_login.table:
             if username == each['username'] and password == each['password']:
-                return each['ID'], each['role']
+                return each['ID'], each['role'], each['username']
         else:
-            return None
+            print("Invalid username or password pls try again")
 
 
-def data_person(ID):
-    person = DB.search('person')
-    person_filter = person.filter(lambda x: x['ID'] == ID)
-    return person_filter.table[0]
+def find_project(name):
+    data_login = DB.search('login')
 
+
+# def data_person(ID):
+#     person = DB.search('person')
+#     person_filter = Table.filter(lambda x: x['ID'] == ID)
+#     return person_filter.table[0]
 
 
 # here are things to do in this function:
@@ -173,35 +240,35 @@ def data_person(ID):
 
 # define a function called exit
 def exit():
-    login = open('login.csv', 'w')
+    login = open('database/login.csv', 'w')
     login_writer = csv.writer(login)
     login_writer.writerow(['ID', 'username', 'password', 'role'])
     for each in DB.search('login'):
         login_writer.writerow(each.values())
     login.close()
 
-    person = open('persons.csv', 'w')
+    person = open('database/persons.csv', 'w')
     person_writer = csv.writer(person)
     person_writer.writerow(['ID', 'first', 'last', 'type'])
     for each in DB.search('person'):
         person_writer.writerow(each.values())
     person.close()
 
-    project = open('project.csv', 'w')
+    project = open('database/project.csv', 'w')
     project_writer = csv.writer(project)
     project_writer.writerow(['ProjectID', 'Title', 'Lead', 'Member1', 'Member2', 'Advisor', 'Status'])
     for each in DB.search('project'):
         person_writer.writerow(each.values())
     person.close()
 
-    advisor_pending = open('Advisor_pending_request.csv', 'w')
+    advisor_pending = open('database/Advisor_pending_request.csv', 'w')
     advisor_pending_writer = csv.writer(advisor_pending)
     advisor_pending_writer.writerow(['ProjectID', 'Advisor_Request', 'Response', 'Response_date'])
     for each in DB.search('advisor'):
         person_writer.writerow(each.values())
     person.close()
 
-    member_pending = open('member_pending_request.csv', 'w')
+    member_pending = open('database/member_pending_request.csv', 'w')
     member_pending_writer = csv.writer(member_pending)
     member_pending_writer.writerow(['ProjectID', 'Member_Request', 'Response', 'Response_date'])
     for each in DB.search('member'):
@@ -209,8 +276,6 @@ def exit():
     person.close()
 
     print('\n Program Exit')
-
-
 
 
 # here are things to do in this function:
@@ -223,21 +288,31 @@ def exit():
 # make calls to the initializing and login functions defined above
 initializing()
 val = login_base()
-print(data_person(val[0]))
 # based on the return value for login, activate the code that performs activities according to the role defined for that person_id
-
+print(val[1])
 if val[1] == 'admin':
-    admin = Admin()
+    user = Admin(val[0], val[2], val[1])
 elif val[1] == 'student':
-    student = Student()
+    user = Student(val[0], val[2], val[1])
 elif val[1] == 'member':
-    member = Member()
+    user = Member(val[0], val[2], val[1])
 elif val[1] == 'lead':
-    lead = Lead()
+    commands = ["Invite"]
+    user = Lead(val[0], val[2], val[1])
 elif val[1] == 'faculty':
-    faculty = Faculty()
+    user = Faculty(val[0], val[2], val[1])
 elif val[1] == 'advisor':
-    advisor = Advisor()
+    user = Advisor(val[0], val[2], val[1])
 
+
+def main():
+    print(f"----------------------------------------------")
+    try:
+        user.run()
+    except:
+        ("You Do Not Have Permission")
+
+
+main()
 # once everyhthing is done, make a call to the exit function
 # exit()

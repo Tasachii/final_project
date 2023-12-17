@@ -4,6 +4,7 @@ import copy
 import csv
 import os
 
+
 class CSV:
     def __init__(self):
         self.__location__ = os.path.realpath(
@@ -84,4 +85,4 @@ class Table:
             if i[primary_attribute] == primary_attribute_value:
                 i[update_attribute] = update_value
 
-#modify the code in the Table class so that it supports the insert operation where an entry can be added to a list of dictionary
+# modify the code in the Table class so that it supports the insert operation where an entry can be added to a list of dictionary
