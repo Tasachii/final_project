@@ -53,13 +53,15 @@ class Student:
 
         # Find the invitation by token
         invitation = next((invite for invite in pending.table if
-                           invite['invitation_token'] == token and invite['Member_Request'] == self.id and invite[
-                               'Response'] == 'pending'), None)
+                           invite['invitation_token'] == token and
+                           invite['Member_Request'] == self.id
+                           and invite['Response'] == 'pending'), None)
 
         if invitation:
             # Find the corresponding project
             for project in project_table.table:
-                if project['Title'] == invitation['project_title'] and project['Lead'] == invitation['Lead']:
+                if (project['Title'] == invitation['project_title']
+                        and project['Lead'] == invitation['Lead']):
                     # Update member slot in the project
                     if project['Member1'] == 'none':
                         project['Member1'] = self.id
@@ -84,7 +86,8 @@ class Student:
         lead_id = input('Input lead id to select project')
 
         for request in pending.table:
-            if request['Member_Request'] == self.id and request['Lead'] == lead_id and request['Response'] == 'pending':
+            if (request['Member_Request'] == self.id and request['Lead'] == lead_id
+                    and request['Response'] == 'pending'):
                 request['Response'] = 'denied'
 
     def run(self):
@@ -129,7 +132,8 @@ class Lead(Student):
         self.user = username
         self.role = role
         self.request_box = []
-        self.project = DB.search('project').filter(lambda project: project['Lead'] == self.id).table[0]
+        self.project = DB.search('project').filter(lambda project:
+                                                   project['Lead'] == self.id).table[0]
 
     @staticmethod
     def see_project():
@@ -257,7 +261,8 @@ class Member:
             return
 
         for project in my_projects.table:
-            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
+            print(f"Title: {project['Title']}, Lead: {project['Lead']}, "
+                  f"Status: {project['Status']}")
 
     def modify_project(self):
         project_table = DB.search('project')
@@ -330,7 +335,8 @@ class Advisor:
     def see_project():
         projects = DB.search('project').table
         for project in projects:
-            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
+            print(f"Title: {project['Title']}, "
+                  f"Lead: {project['Lead']}, Status: {project['Status']}")
 
     @staticmethod
     def approve_project():
@@ -453,7 +459,8 @@ class Faculty:
         advisor_requests = DB.search('advisor').table
         for request in advisor_requests:
             print(
-                f"Project ID: {request['ProjectID']}, Advisor Request: {request['Advisor_Request']}, "
+                f"Project ID: {request['ProjectID']}, Advisor Request:"
+                f" {request['Advisor_Request']}, "
                 f"Response: {request['Response']}")
 
     def manage_request(self):
@@ -473,7 +480,8 @@ class Faculty:
     def view_all_projects():
         projects = DB.search('project').table
         for project in projects:
-            print(f"Title: {project['Title']}, Lead: {project['Lead']}, Status: {project['Status']}")
+            print(f"Title: {project['Title']}, "
+                  f"Lead: {project['Lead']}, Status: {project['Status']}")
 
     @staticmethod
     def comment_on_project():
@@ -548,6 +556,7 @@ def login_base():
         else:
             print("Invalid username or password pls try again")
 
+
 # def data_person(ID):
 #     person = DB.search('person')
 #     person_filter = Table.filter(lambda x: x['ID'] == ID)
@@ -570,51 +579,15 @@ def write_csv(filename, head, dict):
 
 
 def exit():
-    # login = open('database/login.csv', 'w')
-    # login_writer = csv.writer(login)
-    # login_writer.writerow(['ID', 'username', 'password', 'role'])
-    # for each in DB.search('login').table:
-    #     login_writer.writerow(each.values())
-    # login.close()
-
     write_csv('login.csv', ['ID', 'username', 'password', 'role'], DB.search('login').table)
-
-    # person = open('database/persons.csv', 'w')
-    # person_writer = csv.writer(person)
-    # person_writer.writerow(['ID', 'first', 'last', 'type'])
-    # for each in DB.search('person').table:
-    #     person_writer.writerow(each.values())
-    # person.close()
-
     write_csv('persons.csv', ['ID', 'first', 'last', 'type'], DB.search('persons').table)
-
-    # project = open('database/project.csv', 'w')
-    # project_writer = csv.writer(project)
-    # project_writer.writerow(['Title','Lead','Member1','Member2','Advisor','Status'])
-    # for each in DB.search('project').table:
-    #     person_writer.writerow(each.values())
-    # person.close()
-
-    write_csv('project.csv', ['Title', 'Lead', 'Member1', 'Member2', 'Advisor', 'Status'], DB.search('project').table)
-
-    # advisor_pending = open('database/Advisor_pending_request.csv', 'w')
-    # advisor_pending_writer = csv.writer(advisor_pending)
-    # advisor_pending_writer.writerow(['ProjectID', 'Advisor_Request', 'Response', 'Response_date'])
-    # for each in DB.search('advisor').table:
-    #     person_writer.writerow(each.values())
-    # person.close()
-
-    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request', 'Response', 'Response_date'],
+    write_csv('project.csv', ['Title', 'Lead', 'Member1', 'Member2',
+                              'Advisor', 'Status'], DB.search('project').table)
+    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request',
+                                              'Response', 'Response_date'],
               DB.search('advisor').table)
-
-    # member_pending = open('database/member_pending_request.csv', 'w')
-    # member_pending_writer = csv.writer(member_pending)
-    # member_pending_writer.writerow(['ProjectID', 'Member_Request', 'Response', 'Response_date'])
-    # for each in DB.search('member').table:
-    #     person_writer.writerow(each.values())
-    # person.close()
-
-    write_csv('member_pending_request.csv', ['Lead', 'project_title', 'Member_Request', 'Response', 'invitation_token'],
+    write_csv('member_pending_request.csv', ['Lead', 'project_title',
+                                             'Member_Request', 'Response', 'invitation_token'],
               DB.search('member').table)
 
     print('\n Program Exit')
@@ -632,7 +605,8 @@ def exit():
 # make calls to the initializing and login functions defined above
 initializing()
 val = login_base()
-# based on the return value for login, activate the code that performs activities according to the role
+# based on the return value for login, activate the code
+# that performs activities according to the role
 # defined for that person_id
 print(val[1])
 if val[1] == 'admin':
