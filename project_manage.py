@@ -608,15 +608,25 @@ def initializing():
     add all these tables to the database
     """
 
-    """
-    Initialize the database with tables from CSV files.
-    """
-    tables = ['login', 'persons', 'project', 'advisor', 'member']
+    csv_login = csv1.read_csv('database/login.csv')
+    login_table = Table('login', csv_login)
+    DB.insert(login_table)
 
-    for table_name in tables:
-        csv_data = csv1.read_csv(f'database/{table_name}.csv')
-        table = Table(table_name, csv_data)
-        DB.insert(table)
+    csv_person = csv1.read_csv('database/persons.csv')
+    person_table = Table('persons', csv_person)
+    DB.insert(person_table)
+
+    csv_project = csv1.read_csv('database/project.csv')
+    project_table = Table('project', csv_project)
+    DB.insert(project_table)
+
+    csv_advisor = csv1.read_csv('database/Advisor_pending_request.csv')
+    advisor_table = Table('advisor', csv_advisor)
+    DB.insert(advisor_table)
+
+    csv_member = csv1.read_csv('database/Member_pending_request.csv')
+    member_table = Table('member', csv_member)
+    DB.insert(member_table)
 
 
 def login_base():
@@ -664,43 +674,30 @@ def exit():
 
 initializing()
 val = login_base()
+# based on the return value for login, activate the code that performs activities according to the role defined for that person_id
+print(val[1])
+if val[1] == 'admin':
+    user = Admin(val[0], val[2], val[1])
+elif val[1] == 'student':
+    user = Student(val[0], val[2], val[1])
+elif val[1] == 'member':
+    user = Member(val[0], val[2], val[1])
+elif val[1] == 'lead':
+    commands = ["Invite"]
+    user = Lead(val[0], val[2], val[1])
+elif val[1] == 'faculty':
+    user = Faculty(val[0], val[2], val[1])
+elif val[1] == 'advisor':
+    user = Advisor(val[0], val[2], val[1])
+
 
 def main():
-    print("Welcome to Senior_Project Report Program")
-    user = login_base()
-
-    if not user:
-        print("Invalid username or password. Exiting...")
-        return
-
-    role = user[1]
-
-    if role == 'admin':
-        user_instance = Admin(*user)
-    elif role == 'student':
-        user_instance = Student(*user)
-    elif role == 'member':
-        user_instance = Member(*user)
-    elif role == 'lead':
-        user_instance = Lead(*user)
-    elif role == 'faculty':
-        user_instance = Faculty(*user)
-    elif role == 'advisor':
-        user_instance = Advisor(*user)
-    else:
-        print("Unknown role. Exiting...")
-        return
-
-    print(f"Welcome {user_instance.user} to Senior_Project Report. Your role is {user_instance.role}.")
+    print(f"----------------------------------------------")
     try:
-        user_instance.run()
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    # Exit and save changes
-    exit()
-
+        user.run()
+    except:
+        "You Do Not Have Permission"
 
 main()
-# once everything is done, make a call to the exit function
+# once everyhthing is done, make a call to the exit function
 exit()
