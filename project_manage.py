@@ -1,4 +1,5 @@
 # import database module
+# please dont forget to run again to update data
 
 from database import CSV, Database, Table
 import csv
