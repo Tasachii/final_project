@@ -19,7 +19,7 @@ class Student:
     def create_project(self):
         data_login = DB.search('project')
         login_table = DB.search('login')
-        Title = input('Project Title')
+        Title = input('Project Title: ')
         Lead_id = self.id
         project = {
             'Title': Title,
@@ -35,14 +35,21 @@ class Student:
                 i['role'] = 'lead'
 
     def check_inbox(self):
-        inbox = []
-        data_login = DB.search('member')
+        inbox_table = DB.search('member')
+        inbox_content = []
+        for each in inbox_table.table:
+            if self.id == each['Member_Request'] and each['Response'] == 'pending':
+                inbox_content.append(each)
 
-        for each in data_login.table:
-            if self.id == each['Member_Request']:
-                inbox.append(each)
+        print("Checking inbox for ID:", self.id)
 
-        return inbox
+        if not inbox_content:
+            print("You don't have any messages.")
+        else:
+            for message in inbox_content:
+                print(
+                    f"Invitation from {message['Lead']} for project '"
+                    f"{message['project_title']}' with status: {message['Response']}")
 
     def see_invite(self):
         pending = DB.search('member')
@@ -228,25 +235,33 @@ class Lead(Student):
         else:
             print("No active project found or you are not the lead.")
 
+    def invite_advisor(self):
+        advisor_id = input('Enter the ID of the advisor to invite: ')
+        advisor_request_table = DB.search('advisor')
+
+        advisor_request_table.insert({
+            'ProjectID': self.project['Title'],
+            'Advisor_Request': advisor_id,
+            'Response': 'pending'
+        })
+        print("Invitation sent to advisor successfully.")
+
     def run(self):
         print(self)
-        print()
         while True:
             print("--Choose--")
             print("1. Invite member")
-            print('2. Create a project')
-            print("3. Logout")
+            print("2. Invite advisor")
+            print("3. Logout.")
             choice = int(input("Enter your choice: "))
             if choice == 1:
                 self.sent_invite()
             elif choice == 2:
-                print()
-                self.create_project()
+                self.invite_advisor()
             elif choice == 3:
                 break
             else:
-                print("you do not have permission")
-            print()
+                print("Invalid choice")
 
 
 class Member:
@@ -268,29 +283,26 @@ class Member:
             print(f"Title: {project['Title']}, Lead: {project['Lead']}, "
                   f"Status: {project['Status']}")
 
-    def modify_project(self):
+    def request_status_change(self):
         project_table = DB.search('project')
-        my_projects = project_table.filter(
-            lambda p: p['Lead'] == self.id or p['Member1'] == self.id or p['Member2'] == self.id)
+        my_projects = project_table.filter(lambda p: self.id in [p['Member1'], p['Member2']])
 
         if not my_projects.table:
             print("No projects found to modify.")
             return
 
-        project_title = input("Enter the title of the project to modify: ")
-        new_title = input("Enter new title (leave blank for no change): ")
+        project_title = input("Enter the title of the project for which you want to request a status change: ")
+        new_status = input("Enter your suggested new status: ")
 
+        project_found = False
         for project in my_projects.table:
             if project['Title'] == project_title:
-                if new_title:
-                    project['Title'] = new_title
-                    project_table.update_row('Title', project_title, 'Title', new_title)
-                    print("Project title updated successfully.")
-                else:
-                    print("No changes made to the project.")
-                return
+                project_found = True
+                print(f"Status change request for '{project_title}' to '{new_status}' has been submitted.")
+                break
 
-        print("Project not found or you do not have permission to modify it.")
+        if not project_found:
+            print("Project not found or you do not have permission to modify it.")
 
     def run(self):
         while True:
@@ -303,7 +315,7 @@ class Member:
             if choice == '1':
                 self.see_project()
             elif choice == '2':
-                self.modify_project()
+                self.request_status_change()
             elif choice == '3':
                 break
             else:
