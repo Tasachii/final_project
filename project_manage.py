@@ -460,12 +460,15 @@ class Faculty:
 
     @staticmethod
     def view_supervisor_requests():
-        advisor_requests = DB.search('advisor').table
-        for request in advisor_requests:
+        advisor_requests = DB.search('advisor')
+
+        for request in advisor_requests.table:
             print(
                 f"Project ID: {request['ProjectID']}, Advisor Request:"
                 f" {request['Advisor_Request']}, "
                 f"Response: {request['Response']}")
+        else:
+            print('No request.')
 
     def manage_request(self):
         self.view_supervisor_requests()
