@@ -4,8 +4,8 @@
 
 | File                        |
 |-----------------------------|
-| Advisor_pending_request.csv |
-| Member_pending_request.csv  |
+| advisor_pending_request.csv |
+| member_pending_request.csv  |
 | Login.csv                   |
 | person.csv                  |
 | project.csv                 |

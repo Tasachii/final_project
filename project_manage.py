@@ -95,7 +95,7 @@ class Student:
     def deny_invite(self):
         pending = DB.search('member')
         self.see_invite()
-        lead_id = input('Input lead id to select project')
+        lead_id = input('Input lead id to select project: ')
 
         for request in pending.table:
             if (request['Member_Request'] == self.id and request['Lead'] == lead_id
@@ -367,6 +367,7 @@ class Advisor:
                 request['Response'] = response
                 print(f"Request for Project ID {project_id} has been {response}.")
                 return
+
         print("Project ID not found or request not for this advisor.")
 
     @staticmethod
@@ -540,11 +541,12 @@ class Faculty:
     def view_supervisor_requests():
         advisor_requests = DB.search('advisor')
 
-        for request in advisor_requests.table:
-            print(
-                f"Project ID: {request['ProjectID']}, Advisor Request:"
-                f" {request['Advisor_Request']}, "
-                f"Response: {request['Response']}")
+        if advisor_requests.table:
+            for request in advisor_requests.table:
+                print(
+                    f"Project ID: {request['ProjectID']}, Advisor Request:"
+                    f" {request['Advisor_Request']}, "
+                    f"Response: {request['Response']}")
         else:
             print('No request.')
 
@@ -553,13 +555,31 @@ class Faculty:
         project_id = input("Enter Project ID to manage: ")
         response = input("Accept or Deny the request? (accept/deny): ")
         advisor_requests = DB.search('advisor')
+        data_login = DB.search('login')
+        persons = DB.search('persons')
 
         for request in advisor_requests.table:
-            if request['ProjectID'] == project_id:
+            print(f"{project_id =}")
+            print(f"{request['ProjectID'] =}")
+            print(f"{self.id =}")
+            print(f"{request['Advisor_Request'] =}")
+            if request['ProjectID'] == project_id and request['Advisor_Request'] == self.id:
                 request['Response'] = response
-                print(f"Request for Project ID {project_id} has been {response}.")
-                return
-        print("Project ID not found.")
+            else:
+                print("Project ID not found.")
+
+            if response == 'accept':
+                for person in persons.table:
+                    if person['ID'] == self.id:
+                        person['type'] = 'advisor'
+
+                for login in data_login.table:
+                    if login['ID'] == self.id:
+                        login['role'] = 'advisor'
+            elif response == 'deny':
+                pass
+
+            print(f"Request for Project ID {project_id} has been {response}.")
 
     @staticmethod
     def view_all_projects():
@@ -607,26 +627,25 @@ def initializing():
     see the guide how many tables are needed
     add all these tables to the database
     """
+    login_data = csv1.read_csv(f'database/login.csv')
+    table = Table('login', login_data)
+    DB.insert(table)
 
-    csv_login = csv1.read_csv('database/login.csv')
-    login_table = Table('login', csv_login)
-    DB.insert(login_table)
+    person_data = csv1.read_csv(f'database/persons.csv')
+    table = Table('persons', person_data)
+    DB.insert(table)
 
-    csv_person = csv1.read_csv('database/persons.csv')
-    person_table = Table('persons', csv_person)
-    DB.insert(person_table)
+    project_data = csv1.read_csv(f'database/project.csv')
+    table = Table('project', project_data)
+    DB.insert(table)
 
-    csv_project = csv1.read_csv('database/project.csv')
-    project_table = Table('project', csv_project)
-    DB.insert(project_table)
+    advisor_data = csv1.read_csv(f'database/advisor_pending_request.csv')
+    table = Table('advisor', advisor_data)
+    DB.insert(table)
 
-    csv_advisor = csv1.read_csv('database/Advisor_pending_request.csv')
-    advisor_table = Table('advisor', csv_advisor)
-    DB.insert(advisor_table)
-
-    csv_member = csv1.read_csv('database/Member_pending_request.csv')
-    member_table = Table('member', csv_member)
-    DB.insert(member_table)
+    member_data = csv1.read_csv(f'database/member_pending_request.csv')
+    table = Table('member', member_data)
+    DB.insert(table)
 
 
 def login_base():
@@ -662,7 +681,7 @@ def exit():
     write_csv('persons.csv', ['ID', 'first', 'last', 'type'], DB.search('persons').table)
     write_csv('project.csv', ['Title', 'Lead', 'Member1', 'Member2',
                               'Advisor', 'Status'], DB.search('project').table)
-    write_csv('Advisor_pending_request.csv', ['ProjectID', 'Advisor_Request',
+    write_csv('advisor_pending_request.csv', ['ProjectID', 'Advisor_Request',
                                               'Response', 'Response_date'],
               DB.search('advisor').table)
     write_csv('member_pending_request.csv', ['Lead', 'project_title',
@@ -674,7 +693,6 @@ def exit():
 
 initializing()
 val = login_base()
-# based on the return value for login, activate the code that performs activities according to the role defined for that person_id
 print(val[1])
 if val[1] == 'admin':
     user = Admin(val[0], val[2], val[1])
@@ -698,6 +716,7 @@ def main():
     except:
         "You Do Not Have Permission"
 
+
 main()
-# once everyhthing is done, make a call to the exit function
+# once everything is done, make a call to the exit function
 exit()
