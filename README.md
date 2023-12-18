@@ -68,30 +68,6 @@ Calls initializing, login_base, and sets up the user based on the role returned 
 Calls main function.
 Calls exit function on program completion
 
+| Class | Method | Action | Role |
+|--|--|--------|---------|
 
-
-| Class | Method | Action                                                                                          |
-|--|--|-------------------------------------------------------------------------------------------------|
-| CSV Class | init | initializes the class. It sets the __location__ <br/>attribute to the current working directory. |
-| CSV Class | read_csv | Reads a CSV file specified by csv_name and returns <br/>its contents as a list of dictionaries. |
-| CSV Class | write_csv| Writes the contents of the table (a list of dictionaries) to a CSV file specified by csv_name.  |
-| Database Class | init | Initializes the class with an empty list called database.                                       |
-| Database Class | insert | Inserts a table (an instance of the Table class) into the database list.                        |
-| Database Class | search | Searches for a table in the database by its name and returns it if found, otherwise returns None. |
-| Table Class | __init__ | Initializes the class with a name (table_name) and initial data (table), which is a list of dictionaries. |
-| Table Class | join | Performs an inner join with another table (other_table) based on a common key. Returns a new Table instance. |
-| Table Class | filter | Filters the table based on a given condition function and returns a new Table instance.         |
-| Table Class | aggregate | Aggregates data in the table using a specified aggregation function on a aggregation_key.       |
-| Table Class | select | Selects specific attributes from the table and returns a new list of dictionaries.              |
-| Table Class | __str__ | Returns a string representation of the table, including its name and data.                                                                                                |
-| Table Class | insert |  Appends a new row (dictionary) to the table.                                                                                                |
-| Table Class | update_row | Updates a specific row in the table based on primary key conditions.                                                                                                |
-
-
-[//]: # (| Database     | File | # In stock |)
-
-[//]: # (|--------------|------|------------|)
-
-[//]: # (| Juicy Apples | 1.99 | 7        |)
-
-[//]: # (| Bananas      | 1.89 | 5234       |)
