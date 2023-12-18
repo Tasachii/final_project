@@ -201,6 +201,16 @@ class Lead(Student):
         project_table.update_row('Lead', self.id, 'Member2', self.project['Member2'])
         print("Member removed successfully.")
 
+    def submit_project(self):
+        project_table = DB.search('project')
+        if self.project and self.project['Lead'] == self.id:
+            # Update the status to 'Submitted'
+            self.project['Status'] = 'Submitted'
+            project_table.update_row('Lead', self.id, 'Status', 'Submitted')
+            print(f"Project '{self.project['Title']}' has been submitted for evaluation.")
+        else:
+            print("No active project found or you are not the lead.")
+
     def modify_project(self):
         project_table = DB.search('project')
         new_title = input("Enter new project title: ")
@@ -252,13 +262,16 @@ class Lead(Student):
             print("--Choose--")
             print("1. Invite member")
             print("2. Invite advisor")
-            print("3. Logout.")
+            print("3. Submit Project")
+            print("4. Logout.")
             choice = int(input("Enter your choice: "))
             if choice == 1:
                 self.sent_invite()
             elif choice == 2:
                 self.invite_advisor()
             elif choice == 3:
+                self.submit_project()
+            elif choice == 4:
                 break
             else:
                 print("Invalid choice")
@@ -372,6 +385,22 @@ class Advisor:
         # Here you should implement the logic to store the comment in your system.
         print(f"Comment added to project '{project_title}': {comment}")
 
+    @staticmethod
+    def evaluate_project():
+        project_table = DB.search('project')
+        project_title = input("Enter the title of the project to evaluate: ")
+        projects = project_table.filter(lambda p: p['Status'] == 'Submitted')
+
+        for project in projects.table:
+            if project['Title'] == project_title:
+                new_status = input("Enter new status for the project (Approved/Needs Revision/etc.): ")
+                feedback = input("Enter your feedback for the project: ")
+                project['Status'] = new_status
+                # Here you should also implement logic to store the feedback.
+                print(f"Project '{project_title}' has been evaluated. Status: {new_status}. Feedback: {feedback}")
+                return
+        print("Project not found or not in a submittable state.")
+
     def run(self):
         while True:
             print("-- Advisor Menu --")
@@ -380,7 +409,8 @@ class Advisor:
             print("3. See all projects")
             print("4. Comment on a project")
             print("5. Approve a project")
-            print("6. Logout")
+            print("6. Evaluate Project")
+            print("7. Logout")
             choice = input("Enter your choice: ")
 
             if choice == '1':
@@ -394,6 +424,8 @@ class Advisor:
             elif choice == '5':
                 self.approve_project()
             elif choice == '6':
+                self.evaluate_project()
+            elif choice == '7':
                 break
             else:
                 print("Invalid choice")
