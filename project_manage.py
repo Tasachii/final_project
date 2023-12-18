@@ -35,10 +35,14 @@ class Student:
                 i['role'] = 'lead'
 
     def check_inbox(self):
+        inbox = []
         data_login = DB.search('member')
+
         for each in data_login.table:
-            if self.id == each['Member_Id']:
-                return each
+            if self.id == each['Member_Request']:
+                inbox.append(each)
+
+        return inbox
 
     def see_invite(self):
         pending = DB.search('member')
