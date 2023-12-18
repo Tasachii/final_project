@@ -18,7 +18,11 @@ class CSV:
                 table.append(dict(r))
         return table
 
-
+    def write_csv(self, csv_name, table):
+        with open(os.path.join(self.__location__, csv_name), 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=table[0].keys())
+            writer.writeheader()
+            writer.writerows(table)
 
 
 # add in code for a Database class
