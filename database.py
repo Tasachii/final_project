@@ -1,4 +1,5 @@
-# try wrapping the code below that reads a persons.csv file in a class and make it more general such that it can read in any csv file
+# try wrapping the code below that reads a persons.csv file in a class
+# and make it more general such that it can read in any csv file
 
 import copy
 import csv
@@ -6,11 +7,23 @@ import os
 
 
 class CSV:
+    """
+    A class for handling CSV files.
+    """
     def __init__(self):
         self.__location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def read_csv(self, csv_name):
+        """
+        Reads a CSV file and returns its content as a list of dictionaries.
+
+        Args:
+            csv_name (str): The name of the CSV file.
+
+        Returns:
+            list: A list of dictionaries representing the CSV data.
+        """
         table = []
         with open(os.path.join(self.__location__, csv_name)) as f:
             rows = csv.DictReader(f)
@@ -86,9 +99,11 @@ class Table:
     def insert(self, table):
         self.table.append(table)
 
-    def update_row(self, primary_attribute, primary_attribute_value, update_attribute, update_value):
+    def update_row(self, primary_attribute, primary_attribute_value,
+                   update_attribute, update_value):
         for i in self.table:
             if i[primary_attribute] == primary_attribute_value:
                 i[update_attribute] = update_value
 
-# modify the code in the Table class so that it supports the insert operation where an entry can be added to a list of dictionary
+# modify the code in the Table class so that it supports the insert operation
+# where an entry can be added to a list of dictionary

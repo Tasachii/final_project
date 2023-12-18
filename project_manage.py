@@ -583,10 +583,6 @@ class Faculty:
         persons = DB.search('persons')
 
         for request in advisor_requests.table:
-            print(f"{project_id =}")
-            print(f"{request['ProjectID'] =}")
-            print(f"{self.id =}")
-            print(f"{request['Advisor_Request'] =}")
             if request['ProjectID'] == project_id and request['Advisor_Request'] == self.id:
                 request['Response'] = response
             else:
