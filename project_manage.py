@@ -153,17 +153,25 @@ class Lead(Student):
 
     def sent_invite(self):
         user_id = input('Enter the ID of the member to invite: ')
-        invitation_token = str(uuid.uuid4())  # Generate a unique token
-        pending_invite_table = DB.search('member')
 
-        pending_invite_table.insert({
-            'Lead': self.id,
-            'Member_Request': user_id,
-            'Response': 'pending',
-            'project_title': self.project['Title'],
-            'invitation_token': invitation_token  # Add token to the invitation
-        })
-        print(f"Invitation sent with token: {invitation_token}")
+        persons = DB.search('persons')
+
+        for person in persons.table:
+            if person['ID'] in user_id:
+                invitation_token = str(uuid.uuid4())  # Generate a unique token
+                pending_invite_table = DB.search('member')
+
+                pending_invite_table.insert({
+                    'Lead': self.id,
+                    'Member_Request': user_id,
+                    'Response': 'pending',
+                    'project_title': self.project['Title'],
+                    'invitation_token': invitation_token  # Add token to the invitation
+                })
+                print(f"Invitation sent with token: {invitation_token}")
+                break
+        else:
+            print("No id found")
 
     def add_member(self):
         member_id = input('Enter the ID of the member to add: ')
