@@ -42,14 +42,12 @@ class Student:
                 inbox_content.append(each)
 
         print("Checking inbox for ID:", self.id)
-
         if not inbox_content:
             print("You don't have any messages.")
         else:
             for message in inbox_content:
                 print(
-                    f"Invitation from {message['Lead']} for project '"
-                    f"{message['project_title']}' with status: {message['Response']}")
+                    f"Invitation from {message['Lead']} for project '{message['project_title']}' with status: {message['Response']}")
 
     def see_invite(self):
         pending = DB.search('member')
@@ -62,18 +60,13 @@ class Student:
         pending = DB.search('member')
         project_table = DB.search('project')
 
-        # Find the invitation by token
         invitation = next((invite for invite in pending.table if
-                           invite['invitation_token'] == token and
-                           invite['Member_Request'] == self.id
-                           and invite['Response'] == 'pending'), None)
+                           invite['invitation_token'] == token and invite['Member_Request'] == self.id and invite[
+                               'Response'] == 'pending'), None)
 
         if invitation:
-            # Find the corresponding project
             for project in project_table.table:
-                if (project['Title'] == invitation['project_title']
-                        and project['Lead'] == invitation['Lead']):
-                    # Update member slot in the project
+                if project['Title'] == invitation['project_title'] and project['Lead'] == invitation['Lead']:
                     if project['Member1'] == 'none':
                         project['Member1'] = self.id
                     elif project['Member2'] == 'none':
@@ -82,9 +75,17 @@ class Student:
                         print("Project is already full.")
                         return
 
-                    # Update the status of the invitation
                     invitation['Response'] = 'accepted'
                     print("Invitation accepted successfully.")
+
+                    # Update role in login.csv
+                    login_table = DB.search('login')
+                    for person in login_table.table:
+                        if person['ID'] == self.id:
+                            person['role'] = 'member'  # Update role
+                            csv1.write_csv('database/login.csv', ['ID', 'username', 'password', 'role'],
+                                           login_table.table)
+                            break
                     return
 
             print("Project not found.")
@@ -108,10 +109,10 @@ class Student:
             print("--Choose--")
             print("1. Check inbox")
             print("2. Create a project")
-            print("3. Logout")
-            print("4. View invitation")
-            print("5. Accept invite")
-            print("6. Deny invite")
+            print("3. View invitation")
+            print("4. Accept invite")
+            print("5. Deny invite")
+            print("6. Logout")
 
             choice = int(input("Enter your choice: "))
             if choice == 1:
@@ -120,13 +121,13 @@ class Student:
                 print()
                 self.create_project()
             elif choice == 3:
-                break
-            elif choice == 4:
                 self.see_invite()
-            elif choice == 5:
+            elif choice == 4:
                 self.accept_invite()
-            elif choice == 6:
+            elif choice == 5:
                 self.deny_invite()
+            elif choice == 6:
+                break
             else:
                 print("you do not have permission")
             print()
@@ -445,19 +446,6 @@ class Admin:
         self.user = username
         self.role = role
 
-    def manage_database(self):
-        print("Database Management")
-        print("1. Edit a Project")
-        print("2. Delete a Project")
-        choice = input("Enter your choice: ")
-
-        if choice == '1':
-            self.edit_project()
-        elif choice == '2':
-            self.delete_project()
-        else:
-            print("Invalid choice")
-
     @staticmethod
     def edit_project():
         project_title = input("Enter the title of the project to edit: ")
@@ -478,27 +466,65 @@ class Admin:
         print("Project title not found.")
 
     @staticmethod
-    def delete_project():
-        project_title = input("Enter the title of the project to delete: ")
-        projects = DB.search('project')
+    def edit_person():
+        person_id = input("Enter the ID of the person to edit: ")
+        persons = DB.search('persons')
 
-        for i, project in enumerate(projects.table):
-            if project['Title'] == project_title:
-                del projects.table[i]
-                print(f"Project '{project_title}' has been deleted.")
+        for person in persons.table:
+            if person['ID'] == person_id:
+                new_first = input("Enter new first name (leave blank to keep current): ")
+                new_last = input("Enter new last name (leave blank to keep current): ")
+                new_type = input("Enter new type (leave blank to keep current): ")
+
+                if new_first:
+                    person['first'] = new_first
+                if new_last:
+                    person['last'] = new_last
+                if new_type:
+                    person['type'] = new_type
+
+                print(f"Person '{person_id}' has been updated.")
                 return
-        print("Project title not found.")
+        print("Person ID not found.")
+
+    @staticmethod
+    def edit_login():
+        user_id = input("Enter the ID of the login to edit: ")
+        logins = DB.search('login')
+
+        for login in logins.table:
+            if login['ID'] == user_id:
+                new_username = input("Enter new username (leave blank to keep current): ")
+                new_password = input("Enter new password (leave blank to keep current): ")
+                new_role = input("Enter new role (leave blank to keep current): ")
+
+                if new_username:
+                    login['username'] = new_username
+                if new_password:
+                    login['password'] = new_password
+                if new_role:
+                    login['role'] = new_role
+
+                print(f"Login for '{user_id}' has been updated.")
+                return
+        print("User ID not found.")
 
     def run(self):
         while True:
             print("-- Admin Menu --")
-            print("1. Manage Database")
-            print("2. Logout")
+            print("1. Manage Project Table")
+            print("2. Manage Person Table")
+            print("3. Manage Login Table")
+            print("4. Logout")
             choice = input("Enter your choice: ")
 
             if choice == '1':
-                self.manage_database()
+                self.edit_project()
             elif choice == '2':
+                self.edit_person()
+            elif choice == '3':
+                self.edit_login()
+            elif choice == '4':
                 break
             else:
                 print("Invalid choice")
@@ -616,12 +642,6 @@ def login_base():
             print("Invalid username or password pls try again")
 
 
-# def data_person(ID):
-#     person = DB.search('person')
-#     person_filter = Table.filter(lambda x: x['ID'] == ID)
-#     return person_filter.table[0]
-
-
 # here are things to do in this function:
 # add code that performs a login task
 # ask a user for a username and password
@@ -652,21 +672,8 @@ def exit():
     print('\n Program Exit')
 
 
-# here are things to do in this function:
-# write out all the tables that have been modified to the corresponding csv files
-# By now, you know how to read in a csv file and transform it into a list of dictionaries.
-# For this project, you also need to know how to do the reverse, i.e., writing out to a csv file
-# given a list of dictionaries. See the link below for a tutorial on how to do this:
-
-# https://www.pythonforbeginners.com/basics/list-of-dictionaries-to-csv-in-python
-
-
-# make calls to the initializing and login functions defined above
 initializing()
 val = login_base()
-# based on the return value for login, activate the code
-# that performs activities according to the role
-# defined for that person_id
 print(val[1])
 if val[1] == 'admin':
     user = Admin(val[0], val[2], val[1])
