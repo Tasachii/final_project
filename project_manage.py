@@ -10,6 +10,10 @@ csv1 = CSV()
 
 
 class Student:
+    """
+    Represents a student in the Senior_Project Report Program.
+    Contains methods for project creation, inbox management, and more.
+    """
     def __init__(self, id, username, role):
         self.id = id
         self.user = username
@@ -138,6 +142,10 @@ class Student:
 
 
 class Lead(Student):
+    """
+    Represents a lead student in the Senior_Project Report Program.
+    Inherits from the Student class and adds lead-specific methods.
+    """
     def __init__(self, id, username, role):
         super().__init__(id, username, role)
         self.id = id
@@ -287,6 +295,10 @@ class Lead(Student):
 
 
 class Member:
+    """
+    Represents a member in the Senior_Project Report Program.
+    Contains methods for viewing projects and requesting status changes.
+    """
     def __init__(self, id, username, role):
         self.id = id
         self.user = username
@@ -345,6 +357,10 @@ class Member:
 
 
 class Advisor:
+    """
+    Represents an advisor in the Senior_Project Report Program.
+    Contains methods for managing requests and evaluating projects.
+    """
     def __init__(self, id, username, role):
         self.id = id
         self.user = username
@@ -442,6 +458,10 @@ class Advisor:
 
 
 class Admin:
+    """
+    Represents an admin in the Senior_Project Report Program.
+    Contains methods for editing project, person, and login tables.
+    """
     def __init__(self, id, username, role):
         self.id = id
         self.user = username
@@ -532,6 +552,10 @@ class Admin:
 
 
 class Faculty:
+    """
+    Represents a faculty member in the Senior_Project Report Program.
+    Contains methods for viewing requests, managing them, and interacting with projects.
+    """
     def __init__(self, id, username, role):
         self.id = id
         self.user = username
@@ -649,6 +673,11 @@ def initializing():
 
 
 def login_base():
+    """
+    Perform user login.
+    Ask for a username and password.
+    Return [ID, role, username] if valid, otherwise return None.
+    """
     print("Welcome to Senior_Project Report Program")
     while True:
         username = input('Enter Username: ')
@@ -669,6 +698,16 @@ def login_base():
 # define a function called exit
 
 def write_csv(filename, head, dict):
+    """
+    Write data to a CSV file.
+    Args:
+        filename (str): The name of the CSV file.
+        head (list): List of column headers.
+        dict (list): List of dictionaries representing rows.
+
+    Returns:
+        None
+    """
     file = open("database/" + filename, 'w')
     writer = csv.DictWriter(file, fieldnames=head)
     writer.writeheader()
@@ -677,6 +716,9 @@ def write_csv(filename, head, dict):
 
 
 def exit():
+    """
+    Save changes to CSV files and exit the program.
+    """
     write_csv('login.csv', ['ID', 'username', 'password', 'role'], DB.search('login').table)
     write_csv('persons.csv', ['ID', 'first', 'last', 'type'], DB.search('persons').table)
     write_csv('project.csv', ['Title', 'Lead', 'Member1', 'Member2',
